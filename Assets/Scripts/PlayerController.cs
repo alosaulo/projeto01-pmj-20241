@@ -1,33 +1,27 @@
 using UnityEngine;
 
-public class PlayerController : MonoBehaviour
+public class PlayerController : Personagem
 {
+    
     // Componentes do personagem
-    private Animator animador;
     private CharacterController characterController;
-    private GameManager gameManager;
-
+    [Header("= = PLAYER = =")]
     // Configurações de movimento e pulo
-    [SerializeField] float velocidade; // Velocidade de movimento do personagem
     [SerializeField] float forcaPulo; // Força do pulo
     [SerializeField] float forcaGravidade; // Intensidade da gravidade
-    [SerializeField] float vida;
-    [SerializeField] bool morreu;
-
-    [SerializeField] Item[] inventario;
-
-    public Item[] Inventario { get { return inventario; } set { inventario = value; } }
+    [SerializeField] int moedas;
 
     private float velocidadeVertical; // Velocidade vertical usada para aplicar gravidade e pulo 
     private float hAxis, vAxis; // Processa o movimento horizontal do personagem
 
     void Start()
     {
+        
         // Inicializa os componentes no início
         animador = GetComponent<Animator>();
         characterController = GetComponent<CharacterController>();
         velocidadeVertical = 0; // Inicializa a velocidade vertical
-        gameManager = GameObject.FindWithTag("GameController").GetComponent<GameManager>();
+        gameManager = GameManager.GetInstance();
     }
 
     void Update()
@@ -45,11 +39,6 @@ public class PlayerController : MonoBehaviour
         Gravidade(); // Aplica gravidade constantemente
         Animacoes(); // Atualiza as animações baseadas no estado do personagem
 
-        if (Input.GetKeyDown(KeyCode.P)) 
-        {
-            SetVida(5);
-            inventario[1] = null;
-        }
         if (isDead()) 
         {
             animador.SetBool("morte", true);
@@ -119,11 +108,6 @@ public class PlayerController : MonoBehaviour
         animador.SetBool("param_idletorunning", isRunning);
     }
 
-    public void SetVida(float qtdVida) 
-    {
-        vida += qtdVida;
-    }
-
     public bool isDead() 
     {
         if (vida <= 0)
@@ -132,32 +116,41 @@ public class PlayerController : MonoBehaviour
             return false;
     }
 
-    public void LevarDano(int qtd)
-    {
-        vida -= qtd;
-        animador.SetTrigger("dano");
-        if (vida <= 0)
-        {
-            Morrer();
-        }
-    }
-
     private void OnTriggerEnter(Collider other)
     {
         if (other.tag == "AtkInimigo") 
         {
-            if(!isDead())
-                LevarDano(1);
+            if (!isDead()) 
+            {
+                EnemyController inimigo = other.GetComponentInParent<EnemyController>();
+                LevarDano(inimigo.dano);
+            }
         }
         if (other.tag == "Treasure") 
         {
             animador.SetTrigger("vitoria");
         }
+        
+        Item item = other.GetComponent<Item>();
+        if (item != null) 
+        {
+            item.UsarItem(this);
+        }
     }
 
-    public void Morrer() 
+    protected override void Morrer() 
     {
         animador.SetBool("morte", true);
+    }
+
+    public void SetDano(int qtdDano) 
+    {
+        dano += qtdDano;
+    }
+
+    public void SetMoeda(int qtdMoeda)
+    {
+        moedas += qtdMoeda;
     }
 
 }

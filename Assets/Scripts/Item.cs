@@ -1,22 +1,31 @@
 using System;
+using UnityEngine;
 
-[System.Serializable]
-public class Item
+public class Item : MonoBehaviour
 {
+    [Header("==ITEM==")]
     public string nome;
-    public float peso;
-    public float durabilidade;
+    public float duracao;
     public float valor;
 
-    public Item() { }
-
-    public Item(string nome, float peso, float durabilidade, float valor)
-    {
-        this.nome = nome;
-        this.peso = peso;
-        this.durabilidade = durabilidade;
-        this.valor = valor;
+    public void InformarStatus() 
+    { 
+        Debug.Log($"{nome} | {duracao} | {valor}");
     }
 
+    public virtual void UsarItem() 
+    {
+        InformarStatus();
+    }
+
+    public virtual void UsarItem(PlayerController player)
+    {
+        InformarStatus();
+    }
+
+    private void Update()
+    {
+        
+    }
 
 }

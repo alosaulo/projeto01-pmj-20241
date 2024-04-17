@@ -2,69 +2,54 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class EnemyController : MonoBehaviour
+public class EnemyController : Personagem
 {
-    [SerializeField] GameObject AtkInimigo;
-
-    [SerializeField] int vida;
-
-    [SerializeField] int dano;
-
-    [SerializeField] float velocidade;
+    [SerializeField] GameObject particlePrefab;
 
     [SerializeField] float aggroDist;
+
+    [SerializeField] float distAtk;
 
     Transform target;
 
     Rigidbody rigidBody;
 
-    Animator animator;
-
     Vector3 pontoInicial;
-
-    int maxVida;
 
 
     // Start is called before the first frame update
     void Start()
     {
+        gameManager = GameManager.GetInstance();
+        target = gameManager.playerController.transform;
         pontoInicial = transform.position;
         rigidBody = GetComponent<Rigidbody>();
-        animator = GetComponent<Animator>();
-        target = GameObject.FindWithTag("Player").transform;
     }
 
     // Update is called once per frame
     void Update()
     {
-        if (DistanciaTarget() > 1.5 && DistanciaTarget() < aggroDist) 
+        if (DistanciaTarget() > distAtk && DistanciaTarget() < aggroDist)
         {
             PerseguirTarget();
             OlharTarget();
         }
-        else if(DistanciaTarget() <= 1.5)
+        else if (DistanciaTarget() <= distAtk)
         {
+            animador.SetBool("walk", false);
             Atacar();
+        }
+        else 
+        {
+            animador.SetBool("walk", false);
         }
             
     }
 
-    public void SetVida(int qtdVida)
-    {
-        vida = qtdVida;
-    }
-
-    public void LevarDano(int qtd)
-    {
-        vida -= qtd;
-        if (vida <= 0) 
-        {
-            Morrer();
-        }
-    }
-
     void PerseguirTarget()
     {
+        animador.SetBool("walk", true);
+
         Vector3 lerp =
             Vector3.LerpUnclamped(transform.position, target.position, velocidade * Time.deltaTime);
 
@@ -87,22 +72,23 @@ public class EnemyController : MonoBehaviour
 
     void Atacar() 
     {
-        animator.SetTrigger("atk");
+        animador.SetTrigger("atk");
     }
 
-    void Morrer() 
-    { 
+    protected override void Morrer() 
+    {
+        Instantiate(particlePrefab,
+                    gameObject.transform.position,
+                    Quaternion.identity);
         Destroy(gameObject);
     }
 
-    public void AtivarAtk() 
-    { 
-        AtkInimigo.SetActive(true);
-    }
-
-    public void DesativarAtk() 
+    private void OnTriggerEnter(Collider other)
     {
-        AtkInimigo.SetActive(false);
+        if (other.tag == "AtkPlayer") 
+        {
+            PlayerController player = other.GetComponentInParent<PlayerController>();
+            LevarDano(player.dano); 
+        }
     }
-
 }
